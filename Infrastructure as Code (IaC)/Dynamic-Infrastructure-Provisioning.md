@@ -85,7 +85,7 @@ Declares variables for customizable aspects of your infrastructure.
 variable "aws_region" {
   description = "The AWS region to deploy resources"
   type        = string
-  default     = "us-west-2"
+  default     = "eu-west-1"
 }
 
 variable "ami_id" {
