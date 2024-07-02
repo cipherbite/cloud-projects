@@ -6,13 +6,14 @@ This project demonstrates the use of Terraform for Infrastructure as Code (IaC).
 - [What is Infrastructure as Code (IaC)?](#what-is-infrastructure-as-code-iac)
 - [Benefits of Terraform](#benefits-of-terraform)
 - [Installing Terraform](#installing-terraform)
+- [Connecting to AWS with Terraform](#connecting-to-aws-with-terraform)
 - [Terraform Project Structure](#terraform-project-structure)
   - [`main.tf`](#maintf)
   - [`variables.tf`](#variablestf)
   - [`terraform.tfvars`](#terraformtfvars)
   - [`output.tf`](#outputtf)
 - [Steps to Apply Terraform Configuration](#steps-to-apply-terraform-configuration)
-- [Final Steps](#final-steps)
+- [Destroying Infrastructure](#destroying-infrastructure)
 - [Conclusion](#conclusion)
 
 ## What is Infrastructure as Code (IaC)?
@@ -23,7 +24,7 @@ Infrastructure as Code (IaC) is the practice of managing and provisioning comput
 
 Terraform is an open-source IaC tool that allows you to define and provision infrastructure using a high-level configuration language. Its benefits include:
 
-- **Declarative Configuration**: Define infrastructure in a declarative manner.
+- **Declarative Configuration**: Define infrastructure in a straightforward and readable manner.
 - **Execution Plans**: Preview changes before applying them.
 - **Resource Graph**: Understand dependencies and manage complex configurations.
 - **Change Automation**: Apply and update infrastructure efficiently and consistently.
@@ -32,129 +33,145 @@ Terraform is an open-source IaC tool that allows you to define and provision inf
 
 To install Terraform, follow the [official installation guide](https://learn.hashicorp.com/tutorials/terraform/install-cli).
 
-### Step-by-Step Instructions
+## Connecting to AWS with Terraform
 
-1. **Download Terraform** from the official website.
-2. **Unzip the package** and move it to a directory included in your system's PATH.
-3. **Verify the installation** by running `terraform -v` in your terminal.
+To begin using Terraform with AWS, configure your AWS credentials:
+
+```bash
+aws configure
+```
+
+Then, initialize Terraform:
+
+```bash
+terraform init
+```
 
 ## Terraform Project Structure
 
-Create a new directory for your Terraform project and navigate into it.
-
 ### `main.tf`
 
-The `main.tf` file contains the primary configuration for your infrastructure. It includes provider configuration and resource definitions.
+The `main.tf` file contains the primary configuration for your infrastructure, including provider configuration and resource definitions. 
 
-![main.tf screenshot](link)
+#### Example Configuration
+
+```hcl
+provider "aws" {
+  region = var.aws_region
+}
+
+resource "aws_instance" "example" {
+  ami           = var.ami_id
+  instance_type = var.instance_type
+}
+```
 
 #### Explanation
 
 - **Provider Block**: Configures the AWS provider with the specified region.
-- **VPC**: Defines a Virtual Private Cloud.
-- **Subnet**: Creates a subnet within the VPC.
-- **Internet Gateway**: Attaches an Internet Gateway to the VPC.
-- **Route Table**: Creates a route to the Internet using the Internet Gateway.
-- **Security Group**: Defines a security group to allow HTTP traffic.
-- **EC2 Instance**: Launches an EC2 instance within the subnet.
+- **Resource Block**: Defines an EC2 instance with specified AMI and instance type.
+
+To apply these changes, run:
+
+```bash
+terraform apply
+```
 
 ### `variables.tf`
 
-The `variables.tf` file defines input variables for your Terraform configuration. Variables allow you to parameterize your configuration.
+The `variables.tf` file defines input variables for your Terraform configuration. 
 
-![variables.tf screenshot](link)
+#### Example Configuration
+
+```hcl
+variable "aws_region" {
+  description = "The AWS region to deploy resources"
+  type        = string
+  default     = "us-west-2"
+}
+
+variable "ami_id" {
+  description = "The AMI ID for the EC2 instance"
+  type        = string
+}
+
+variable "instance_type" {
+  description = "The instance type for the EC2 instance"
+  type        = string
+  default     = "t2.micro"
+}
+```
 
 #### Explanation
 
 - **Variable Definitions**: Variables allow you to reuse and customize your Terraform configuration.
-- **Example Variables**:
-  - `vpc_cidr`: CIDR block for the VPC.
-  - `vpc_name`: Name of the VPC.
-  - `subnet_cidr`: CIDR block for the subnet.
-  - `subnet_name`: Name of the subnet.
-  - `igw_name`: Name of the Internet Gateway.
-  - `ec2_ami`: AMI ID for the EC2 instance.
-  - `instance_type`: Type of EC2 instance.
+- **Example Variables**: Define AWS region, AMI ID, and instance type.
+
+You can override variables when applying the configuration:
+
+```bash
+terraform apply -var "instance_name=MyNewEC2Instance"
+```
 
 ### `terraform.tfvars`
 
-The `terraform.tfvars` file provides default values for the variables defined in `variables.tf`. This file is useful for separating variable values from the configuration.
+The `terraform.tfvars` file provides default values for the variables defined in `variables.tf`.
 
-![terraform.tfvars screenshot](link)
+#### Example Configuration
+
+```hcl
+aws_region    = "us-west-2"
+ami_id        = "ami-0c55b159cbfafe1f0"
+instance_type = "t2.micro"
+```
 
 #### Explanation
 
 - **Purpose**: Provides default values for variables, simplifying the configuration process.
-- **Example**: Sets default values for AWS region, EC2 AMI, instance type, and instance name.
+- **Example**: Sets default values for AWS region, EC2 AMI, and instance type.
 
 ### `output.tf`
 
-The `output.tf` file defines outputs for your Terraform configuration. Outputs allow you to extract information about your resources after they are created.
+The `output.tf` file defines outputs for your Terraform configuration, allowing you to extract information about your resources after they are created.
 
-![output.tf screenshot](link)
+#### Example Configuration
+
+```hcl
+output "instance_id" {
+  value = aws_instance.example.id
+}
+
+output "instance_public_ip" {
+  value = aws_instance.example.public_ip
+}
+```
 
 #### Explanation
 
-- **Outputs**: Define outputs to extract and display resource information.
-- **Example Outputs**: EC2 instance ID and public IP address.
+- **Outputs**: Provide information about the resources created, such as the EC2 instance ID and public IP address.
+
+You can view the outputs by running:
+
+```bash
+terraform output
+```
 
 ## Steps to Apply Terraform Configuration
 
-1. **Initialize Terraform**: Run `terraform init` to initialize your Terraform configuration.
-2. **Validate Configuration**: Run `terraform validate` to check for any syntax errors.
-3. **Plan Changes**: Run `terraform plan` to preview the changes Terraform will make.
-4. **Apply Configuration**: Run `terraform apply` to create the infrastructure. You can provide variable values using `-var` options or by using a `terraform.tfvars` file.
-
-### Example Command
-
-```sh
-terraform apply -var "instance_name=MyNewEC2Instance"
-```
-
-![main.tf explanation screenshot](link)
-
-- **Provider Block**: Specifies the provider (AWS) and region.
-- **VPC**: Defines a VPC with a specified CIDR block.
-- **Subnet**: Creates a subnet within the VPC.
-- **Internet Gateway**: Attaches an Internet Gateway to the VPC.
-- **Route Table**: Creates a route to the Internet using the Internet Gateway.
-
-![variables.tf explanation screenshot](link)
-
-- **Variable Definitions**:
-  - `vpc_cidr`: CIDR block for the VPC.
-  - `vpc_name`: Name of the VPC.
-  - `subnet_cidr`: CIDR block for the subnet.
-  - `subnet_name`: Name of the subnet.
-  - `igw_name`: Name of the Internet Gateway.
-  - `ec2_ami`: AMI ID for the EC2 instance.
-  - `instance_type`: Type of EC2 instance.
-
-![main.tf security group and EC2 instance explanation screenshot](link)
-
-- **Security Group**: Defines a security group to allow HTTP traffic.
-- **EC2 Instance**: Launches an EC2 instance within the subnet.
-
-![subnets screenshot](link)
-![route tables screenshot](link)
-![instance in internet screenshot](link)
-
-## Final Steps
-
-1. **Initialize Terraform**: Run `terraform init` to initialize your configuration.
-2. **Apply Configuration**: Run `terraform apply` to create your AWS infrastructure.
-3. **Check Outputs**: Run `terraform output` to view the resource IDs and IP addresses.
-
-## Conclusion
-
-This project demonstrates how to use Terraform for Infrastructure as Code, showcasing the creation of a VPC, Subnet, Internet Gateway, and an EC2 instance in AWS. Terraform's declarative configuration and automation capabilities simplify the process of managing and provisioning cloud infrastructure.
+1. **Configure AWS Credentials**: Use `aws configure` to set up your AWS credentials.
+2. **Initialize Terraform**: Run `terraform init` to initialize the configuration.
+3. **Apply the Configuration**: Use `terraform apply` to create the infrastructure.
 
 ## Destroying Infrastructure
 
-To clean up and destroy the infrastructure you created, run `terraform destroy`. This command will remove all resources defined in your configuration.
+To clean up and destroy the infrastructure you created, run:
 
-![terraform destroy screenshot](link)
+```bash
+terraform destroy
+```
 
----
+This command will remove all resources defined in your configuration.
 
-By following this guide, you will gain hands-on experience with Terraform, enhancing your skills and preparing you for a career in cloud infrastructure management. This project is an excellent demonstration of your ability to manage infrastructure as code, a critical skill for cloud professionals.
+## Conclusion
+
+This project demonstrates the basics of using Terraform for Infrastructure as Code, showcasing the creation of a VPC, Subnet, Internet Gateway, and an EC2 instance in AWS. Terraform's declarative configuration and automation capabilities simplify the process of managing and provisioning cloud infrastructure.
